@@ -151,6 +151,10 @@ class Engine {
     _tr = trace;
     _trees = trees;
     _rootPlayer = player;
+    _iterDepth = 0;
+    _bestSoFar = -1;
+    _stack.clear();
+    _path.clear();
     nodes = 0;
     cuts = 0;
     ttHits = 0;

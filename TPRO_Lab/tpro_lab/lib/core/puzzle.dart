@@ -161,10 +161,15 @@ class Node {
   final int state, g, h;
   final double f;
   final Node? parent;
-  Node(this.state, this.g, this.h, this.f, this.parent);
 
-  /// Priorite : f croissant ; a egalite, le noeud le plus proche du but (h minimal).
-  bool before(Node o) => f < o.f || (f == o.f && h < o.h);
+  /// Rang de creation : rend l'ordre total, donc identique pour les deux files.
+  final int seq;
+  Node(this.state, this.g, this.h, this.f, this.parent, [this.seq = 0]);
+
+  /// Priorite : f croissant ; a egalite, le noeud le plus proche du but (h minimal) ;
+  /// a egalite encore, le plus recent. L'ordre etant total, la file naive et le tas
+  /// extraient exactement la meme suite de noeuds.
+  bool before(Node o) => f < o.f || (f == o.f && (h < o.h || (h == o.h && seq > o.seq)));
 }
 
 abstract class PriorityQueue {
@@ -435,7 +440,7 @@ AStarResult solvePuzzle(
       }
       bestG[ns] = g;
       final h = heuristic(heuristicKind, ns);
-      open.insert(Node(ns, g, h, g + weight * h, cur));
+      open.insert(Node(ns, g, h, g + weight * h, cur, generated));
       generated++;
       if (trace != null) {
         nb.add(NeighborInfo(ns, g, h, g + weight * h, old == null ? 'inséré' : 'amélioré'));
