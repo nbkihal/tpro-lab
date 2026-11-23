@@ -92,6 +92,9 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
   bool netActive = false;
   int netMe = kX;
   final List<_LogLine> _log = [];
+
+  /// Lignes du journal (pour les tests).
+  List<String> get debugLog => [for (final l in _log) '${l.dir} ${l.text}'];
   int _tab = 0;
 
   EngineOptions get _opts => EngineOptions(ordering: ordering, nearOnly: nearOnly, useTT: useTT, tactics: tactics);
@@ -770,93 +773,89 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
         final scale = Board.defaultWeights(m)[m - 1] * 3.0;
         final share = st == kX ? 1.0 : (st == kO ? 0.0 : 0.5 + 0.5 * e.sign * min(1.0, log(1 + e.abs()) / log(1 + scale)));
         final player = turn;
+        final info = Text(
+            'N = $n · M = $m · TMO = $tmo s · ${const ['Moi contre l\'IA', 'IA contre IA', 'Réseau', 'Démonstration locale'][mode]}'
+            '${board.status() == 0 ? ' · trait à ${_sym(turn)}' : ''}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: kMono.copyWith(color: C.muted, fontSize: 11.5));
         return Padding(
-          padding: const EdgeInsets.fromLTRB(12, 30, 12, 26),
-          child: Stack(clipBehavior: Clip.none, children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: EvalBar(share: share, label: st == kX ? 'gain X' : (st == kO ? 'gain O' : (e > 0 ? '+$e' : '$e'))),
-              ),
-              Expanded(
-                flex: 5,
-                child: LayoutBuilder(builder: (context, box) {
-                  return MouseRegion(
-                    cursor: mode == 0 && !thinking && turn == _human && board.status() == 0 ? SystemMouseCursors.click : SystemMouseCursors.basic,
-                    child: GestureDetector(
-                      key: const Key('ttt-board'),
-                      behavior: HitTestBehavior.opaque,
-                      onTapUp: (d) => _tapCell(d.localPosition, box.biggest),
-                      child: CustomPaint(
-                        size: box.biggest,
-                        painter: BoardPainter(
-                          n: n,
-                          cells: board.cells,
-                          lastMove: lastMove,
-                          winCells: board.winningCells(),
-                          heat: heat && board.status() == 0 && view == null ? moveScores(board, player) : null,
-                          ghost: view?.path ?? const [],
-                          ghostFirst: view?.rootPlayer ?? kX,
-                          bestMove: view?.bestMove ?? -1,
-                          progress: progress,
-                          phase: _anim.value,
-                          labelBase: indexBaseShown,
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            SizedBox(height: 32, child: Row(children: [Expanded(child: info), _badge()])),
+            Expanded(
+                child: Stack(children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: EvalBar(share: share, label: st == kX ? 'gain X' : (st == kO ? 'gain O' : (e > 0 ? '+$e' : '$e'))),
+                ),
+                Expanded(
+                  flex: 5,
+                  child: LayoutBuilder(builder: (context, box) {
+                    return MouseRegion(
+                      cursor: mode == 0 && !thinking && turn == _human && board.status() == 0 ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                      child: GestureDetector(
+                        key: const Key('ttt-board'),
+                        behavior: HitTestBehavior.opaque,
+                        onTapUp: (d) => _tapCell(d.localPosition, box.biggest),
+                        child: CustomPaint(
+                          size: box.biggest,
+                          painter: BoardPainter(
+                            n: n,
+                            cells: board.cells,
+                            lastMove: lastMove,
+                            winCells: board.winningCells(),
+                            heat: heat && board.status() == 0 && view == null ? moveScores(board, player) : null,
+                            ghost: view?.path ?? const [],
+                            ghostFirst: view?.rootPlayer ?? kX,
+                            bestMove: view?.bestMove ?? -1,
+                            progress: progress,
+                            phase: _anim.value,
+                            labelBase: indexBaseShown,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }),
-              ),
-              if (tree != null && showTree) ...[
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 6,
-                  child: SearchTreeView(
-                    key: const Key('ttt-tree'),
-                    tree: tree,
-                    seq: step!.seq,
-                    current: view!.node,
-                    boardN: n,
-                    onClose: () => setState(() => showTree = false),
-                  ),
+                    );
+                  }),
                 ),
-              ],
-            ]),
-            Positioned(
-              left: 0,
-              top: -22,
-              child: IgnorePointer(
-                child: Text(
-                    'N = $n · M = $m · TMO = $tmo s · ${const ['Moi contre l\'IA', 'IA contre IA', 'Réseau', 'Démonstration locale'][mode]}'
-                    '${board.status() == 0 ? ' · trait à ${_sym(turn)}' : ''}',
-                    style: kMono.copyWith(color: C.muted, fontSize: 11.5)),
-              ),
-            ),
-            Positioned(right: 0, top: -24, child: _badge()),
-            if (thinking || explaining)
-              Positioned(
-                right: tree != null && showTree ? null : 4,
-                left: tree != null && showTree ? 48 : null,
-                top: 18,
-                child: SpotTarget(host: host, ids: const ['alarm'], color: _accent, radius: 30, child: _ring(now)),
-              ),
-            Positioned(
-              left: 0,
-              bottom: -24,
-              child: Row(children: [
-                ChipBtn(
-                    label: 'Carte de chaleur',
-                    icon: Icons.local_fire_department_outlined,
-                    color: C.amber,
-                    active: heat,
-                    tip: 'Teinte chaque case vide selon son score de tri des coups',
-                    onTap: () => setState(() => heat = !heat)),
-                if (tree != null && !showTree) ...[
-                  const SizedBox(width: 6),
-                  ChipBtn(label: 'Arbre de recherche', icon: Icons.account_tree_outlined, color: _accent, onTap: () => setState(() => showTree = true)),
+                if (tree != null && showTree) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 6,
+                    child: SearchTreeView(
+                      key: const Key('ttt-tree'),
+                      tree: tree,
+                      seq: step!.seq,
+                      current: view!.node,
+                      boardN: n,
+                      onClose: () => setState(() => showTree = false),
+                    ),
+                  ),
                 ],
               ]),
-            ),
+              if (thinking || explaining)
+                Positioned(
+                  right: tree != null && showTree ? null : 4,
+                  left: tree != null && showTree ? 48 : null,
+                  top: 4,
+                  child: SpotTarget(host: host, ids: const ['alarm'], color: _accent, radius: 30, child: _ring(now)),
+                ),
+            ])),
+            const SizedBox(height: 4),
+            Row(children: [
+              ChipBtn(
+                  label: 'Carte de chaleur',
+                  icon: Icons.local_fire_department_outlined,
+                  color: C.amber,
+                  active: heat,
+                  tip: 'Teinte chaque case vide selon son score de tri des coups',
+                  onTap: () => setState(() => heat = !heat)),
+              if (tree != null && !showTree) ...[
+                const SizedBox(width: 6),
+                ChipBtn(label: 'Arbre de recherche', icon: Icons.account_tree_outlined, color: _accent, onTap: () => setState(() => showTree = true)),
+              ],
+            ]),
           ]),
         );
       },
@@ -1035,7 +1034,8 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
                 const Expanded(child: Text('Indices à partir de', style: TextStyle(color: C.text, fontSize: 12.5))),
                 SizedBox(
                     width: 110,
-                    child: SegBar(options: const ['0', '1'], index: indexBase, color: _accent, enabled: !lock, onChanged: (i) => setState(() => indexBase = i))),
+                    child:
+                        SegBar(options: const ['0', '1'], index: indexBase, color: _accent, enabled: !lock, onChanged: (i) => setState(() => indexBase = i))),
               ]),
               const SizedBox(height: 6),
               if (!lock) ...[
@@ -1071,7 +1071,9 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
                 child: Row(children: [
                   const Expanded(
                     child: Text('JOURNAL DU PROTOCOLE   > envoyé   < reçu   # info',
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: C.muted, fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: C.muted, fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
                   ),
                   IconBtn(
                       icon: Icons.copy_rounded,
@@ -1118,7 +1120,8 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
   Widget _resultTab() {
     final s = lastSearch, p = prevSearch;
     if (s == null) {
-      return const EmptyState(icon: Icons.insights_outlined, text: 'Aucune recherche pour le moment : jouez un coup ou lancez une partie IA contre IA.', color: _accent);
+      return const EmptyState(
+          icon: Icons.insights_outlined, text: 'Aucune recherche pour le moment : jouez un coup ou lancez une partie IA contre IA.', color: _accent);
     }
     final comparable = p != null && p.n == s.n;
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
