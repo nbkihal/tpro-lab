@@ -129,9 +129,21 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                 static_cast<LONG>(760 * scale)};
       AdjustWindowRectEx(&r, GetWindowLong(hwnd, GWL_STYLE), FALSE,
                          GetWindowLong(hwnd, GWL_EXSTYLE));
+      // Jamais plus grand que la zone de travail de l'ecran (petits ecrans a
+      // forte mise a l'echelle) : l'interface se reduit alors d'elle-meme.
+      LONG min_w = r.right - r.left;
+      LONG min_h = r.bottom - r.top;
+      MONITORINFO mi = {sizeof(mi)};
+      if (GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST),
+                         &mi)) {
+        const LONG work_w = mi.rcWork.right - mi.rcWork.left;
+        const LONG work_h = mi.rcWork.bottom - mi.rcWork.top;
+        if (min_w > work_w) min_w = work_w;
+        if (min_h > work_h) min_h = work_h;
+      }
       auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
-      info->ptMinTrackSize.x = r.right - r.left;
-      info->ptMinTrackSize.y = r.bottom - r.top;
+      info->ptMinTrackSize.x = min_w;
+      info->ptMinTrackSize.y = min_h;
       return 0;
     }
   }

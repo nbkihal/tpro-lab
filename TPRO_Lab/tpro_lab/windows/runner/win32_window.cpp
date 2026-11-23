@@ -150,7 +150,8 @@ bool Win32Window::Create(const std::wstring& title,
 }
 
 bool Win32Window::Show() {
-  return ShowWindow(window_handle_, SW_SHOWNORMAL);
+  // TPRO Lab : la fenetre s'ouvre maximisee (ecrans de portable, video-projecteur).
+  return ShowWindow(window_handle_, SW_SHOWMAXIMIZED);
 }
 
 // static

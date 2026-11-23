@@ -36,6 +36,23 @@ class TproApp extends StatelessWidget {
         ),
         snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
       ),
+      // L'interface est concue pour au moins 1280 x 760 points. Sur un ecran plus petit
+      // (portable 1920 x 1080 a 150 %, video-projecteur), elle est dessinee a cette taille
+      // puis reduite pour tenir dans la fenetre : rien n'est coupe.
+      builder: (context, child) => LayoutBuilder(builder: (context, box) {
+        const minW = 1280.0, minH = 760.0;
+        final sw = box.maxWidth / minW, sh = box.maxHeight / minH;
+        final s = sw < sh ? sw : sh;
+        if (s >= 1 || !s.isFinite || s <= 0) return child!;
+        final w = box.maxWidth / s, h = box.maxHeight / s;
+        return FittedBox(
+          child: SizedBox(
+            width: w,
+            height: h,
+            child: MediaQuery(data: MediaQuery.of(context).copyWith(size: Size(w, h)), child: child!),
+          ),
+        );
+      }),
       home: const Shell(),
     );
   }
