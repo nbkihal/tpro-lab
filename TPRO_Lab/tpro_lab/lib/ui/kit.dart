@@ -389,7 +389,12 @@ class ChipBtn extends StatelessWidget {
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           if (icon != null) ...[Icon(icon, size: 15, color: on ? (active ? color : C.text) : C.muted), const SizedBox(width: 6)],
-          Text(label, style: TextStyle(color: on ? (active ? color : C.text) : C.muted, fontSize: 12, fontWeight: FontWeight.w600)),
+          Flexible(
+            child: Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: on ? (active ? color : C.text) : C.muted, fontSize: 12, fontWeight: FontWeight.w600)),
+          ),
         ]),
       ),
     );

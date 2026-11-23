@@ -822,11 +822,12 @@ class _TspPageState extends State<TspPage> with SingleTickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(color: C.card2, borderRadius: BorderRadius.circular(12)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      // Defilable : la zone basse peut etre courte (fenetre minimale, grandes polices).
+      child: ListView(children: [
         _label('RÉSULTATS (TEMPS MESURÉS SANS TRACE)'),
         for (var m = 0; m < 3; m++)
           if (res[m] != null || m == method) _resultRow(m),
-        const Spacer(),
+        const SizedBox(height: 6),
         if (same != null)
           Row(children: [
             Icon(same ? Icons.check_circle_rounded : Icons.error_rounded, size: 16, color: same ? C.green : C.red),

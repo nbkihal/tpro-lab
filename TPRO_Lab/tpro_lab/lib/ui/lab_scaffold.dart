@@ -272,22 +272,29 @@ class BottomTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Row(children: [
-        // Les onglets defilent si la place manque (fenetre minimale, grandes polices).
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(children: [
-              for (var i = 0; i < tabs.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChipBtn(label: tabs[i], color: accent, active: i == index, onTap: () => onChanged(i)),
-                ),
-            ]),
-          ),
+      // Si la place manque (fenetre minimale, grandes polices), les actions passent a la ligne.
+      SizedBox(
+        width: double.infinity,
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                for (var i = 0; i < tabs.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChipBtn(label: tabs[i], color: accent, active: i == index, onTap: () => onChanged(i)),
+                  ),
+              ]),
+            ),
+            if (trailing != null) SingleChildScrollView(scrollDirection: Axis.horizontal, child: trailing!),
+          ],
         ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-      ]),
+      ),
       const SizedBox(height: 8),
       Expanded(child: IndexedStack(index: index, children: children)),
     ]);
