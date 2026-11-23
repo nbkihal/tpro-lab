@@ -82,6 +82,25 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('TP 3 : scenarios alarme (TMO = 1 s, HMAX = 20) et tri des coups', (tester) async {
+    await pumpPage(tester, const TttPage());
+    final s = stateOf(tester);
+    await tester.runAsync(() => s.loadScenario(2));
+    expect(await waitFor(tester, () => s.host.checks.value.contains('alarm'), seconds: 10), isTrue);
+    expect(s.lastSearch!.r.timedOut, isTrue);
+    expect(s.lastSearch!.r.millis, lessThan(1000)); // jamais plus que TMO
+    expect(s.board.count, 3); // l'IA a bien joue un coup legal
+    await settle(tester);
+    await shot(tester, 'tp3_alarm');
+    await tester.runAsync(() => s.loadScenario(3));
+    await settle(tester);
+    expect(s.prevSearch!.label, 'avec tri');
+    expect(s.lastSearch!.label, 'sans tri');
+    expect(s.lastSearch!.r.nodes, greaterThan(s.prevSearch!.r.nodes));
+    await shot(tester, 'tp3_ordering');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('TP 3 : IA contre IA jusqu\'a la fin de la partie', (tester) async {
     await pumpPage(tester, const TttPage());
     final s = stateOf(tester);

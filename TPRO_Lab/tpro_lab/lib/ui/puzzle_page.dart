@@ -446,9 +446,9 @@ class _PuzzlePageState extends State<PuzzlePage> {
         final g = v?.g ?? 0;
         final f = v?.f ?? p * h;
         return LayoutBuilder(builder: (context, box) {
-          final side = max(120.0, min(box.maxWidth - 40, box.maxHeight - 76));
+          final side = max(100.0, min(box.maxWidth - 40, box.maxHeight - 96));
           return Stack(fit: StackFit.expand, children: [
-            Center(child: _Board(state: shown, side: side, onTap: _moveAt)),
+            Padding(padding: const EdgeInsets.only(top: 66, bottom: 30), child: Center(child: _Board(state: shown, side: side, onTap: _moveAt))),
             Positioned(
               left: 12,
               top: 10,
@@ -466,7 +466,7 @@ class _PuzzlePageState extends State<PuzzlePage> {
                 ]),
               ),
             ),
-            Positioned(right: 12, top: 8, child: _statusBadge()),
+            Positioned(right: 12, top: 8, child: _statusBadge(v)),
             Positioned(
               left: 12,
               bottom: 8,
@@ -481,11 +481,15 @@ class _PuzzlePageState extends State<PuzzlePage> {
     );
   }
 
-  Widget _statusBadge() {
+  Widget _statusBadge(PuzzleView? v) {
     String? text;
     var color = _accent;
     final r = result;
-    if (_busy) {
+    final searching = v != null && v.solutionIndex < 0 && host.player.current?.kind != StepKind.found;
+    if (searching) {
+      // Pendant la relecture de la recherche, on ne devoile pas la solution.
+      text = 'Recherche : ${_thousands(v.closed)} développés · frontière ${_thousands(v.open)}';
+    } else if (_busy) {
       text = 'Recherche $_runLabel en cours…';
       color = C.amber;
     } else if (r != null) {
@@ -549,6 +553,11 @@ class _PuzzlePageState extends State<PuzzlePage> {
         child: Text(t, style: const TextStyle(color: C.muted, fontSize: 10.5, fontWeight: FontWeight.w700, letterSpacing: 1.1)),
       );
 
+  Widget _hint(String t) => Padding(
+        padding: const EdgeInsets.only(top: 4, left: 2),
+        child: Text(t, style: const TextStyle(color: C.muted, fontSize: 11.5, height: 1.3)),
+      );
+
   Widget _searchTab() => Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
           flex: 10,
@@ -583,40 +592,6 @@ class _PuzzlePageState extends State<PuzzlePage> {
           flex: 11,
           child: SingleChildScrollView(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _caption('FILE DE PRIORITÉ'),
-              SpotTarget(
-                host: host,
-                ids: const ['naive', 'heap'],
-                color: _accent,
-                radius: 10,
-                child: SegBar(
-                    options: const ['File naïve · O(n)', 'Tas · O(log n)'],
-                    index: useHeap ? 1 : 0,
-                    color: _accent,
-                    enabled: !_busy,
-                    onChanged: (i) => setState(() {
-                          useHeap = i == 1;
-                          _invalidate();
-                        })),
-              ),
-              const SizedBox(height: 8),
-              _caption('HEURISTIQUE (TOUTES ADMISSIBLES, h1 ≤ h2 ≤ h3)'),
-              SpotTarget(
-                host: host,
-                ids: const ['h1', 'h2'],
-                color: _accent,
-                radius: 10,
-                child: SegBar(
-                    options: const ['h1 mal placés', 'h2 Manhattan', 'h3 + conflits'],
-                    index: hk,
-                    color: _accent,
-                    enabled: !_busy,
-                    onChanged: (i) => setState(() {
-                          hk = i;
-                          _invalidate();
-                        })),
-              ),
-              const SizedBox(height: 8),
               SpotTarget(
                 host: host,
                 ids: const ['wastar'],
@@ -653,6 +628,41 @@ class _PuzzlePageState extends State<PuzzlePage> {
                   ),
                 ]),
               ),
+              const SizedBox(height: 2),
+              _caption('FILE DE PRIORITÉ'),
+              SpotTarget(
+                host: host,
+                ids: const ['naive', 'heap'],
+                color: _accent,
+                radius: 10,
+                child: SegBar(
+                    options: const ['File naïve · O(n)', 'Tas · O(log n)'],
+                    index: useHeap ? 1 : 0,
+                    color: _accent,
+                    enabled: !_busy,
+                    onChanged: (i) => setState(() {
+                          useHeap = i == 1;
+                          _invalidate();
+                        })),
+              ),
+              const SizedBox(height: 8),
+              _caption('HEURISTIQUE'),
+              SpotTarget(
+                host: host,
+                ids: const ['h1', 'h2'],
+                color: _accent,
+                radius: 10,
+                child: SegBar(
+                    options: const ['h1', 'h2', 'h3'],
+                    index: hk,
+                    color: _accent,
+                    enabled: !_busy,
+                    onChanged: (i) => setState(() {
+                          hk = i;
+                          _invalidate();
+                        })),
+              ),
+              _hint('${kHeuristicShort[hk]} : ${const ['nombre de jetons mal placés', 'somme des distances de Manhattan', 'Manhattan + conflits linéaires'][hk]}. Admissible ; h1 ≤ h2 ≤ h3.'),
             ]),
           ),
         ),

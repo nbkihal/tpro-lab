@@ -320,6 +320,7 @@ void toast(BuildContext context, String msg, {VoidCallback? onUndo, bool error =
   m.showSnackBar(SnackBar(
     content: Text(msg, style: const TextStyle(color: C.text)),
     backgroundColor: C.card2,
+    behavior: SnackBarBehavior.floating,
     width: 560,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: error ? C.red : C.line)),
     duration: Duration(seconds: onUndo != null ? 6 : 4),

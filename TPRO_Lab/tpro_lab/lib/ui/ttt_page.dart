@@ -408,7 +408,8 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
     try {
       await c.run();
     } on SocketException catch (e) {
-      if (live()) {
+      if (!mounted) return;
+      if (gen == _gen) {
         _addLog('# connexion impossible : ${e.message}');
         toast(context, 'Serveur injoignable ($hostName:$port). Vérifiez l\'adresse, le port et que le serveur est lancé.', error: true);
       }
@@ -566,8 +567,8 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
         _afterMove();
       case 3:
         setState(() {
-          n = 7;
-          m = 4;
+          n = 9;
+          m = 5;
           tmo = 3;
           hmax = 4;
           nearOnly = useTT = tactics = true;
@@ -575,13 +576,11 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
           mode = 0;
           humanIsX = true;
           _tab = 2;
-          final cells = List<int>.filled(49, kEmpty);
-          cells[24] = kX;
-          cells[25] = kX;
-          cells[17] = kO;
-          cells[23] = kO;
-          cells[31] = kX;
-          cells[32] = kO;
+          final cells = List<int>.filled(81, kEmpty);
+          cells[40] = kX;
+          cells[32] = kX;
+          cells[31] = kO;
+          cells[49] = kO;
           _resetBoard(cells: cells, toMove: kX);
           lastSearch = null;
           prevSearch = null;
@@ -671,7 +670,7 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
   int get indexBaseShown => netActive ? indexBase : 0;
 
   Widget _iterTable(SearchInfo s) => MiniTable(
-        headers: const ['prof.', 'meilleur coup', 'score', 'nœuds', 'temps', 'terminée'],
+        headers: const ['prof.', 'coup', 'score', 'nœuds', 'temps', 'terminée'],
         highlight: s.r.iters.lastIndexWhere((i) => i.completed),
         rows: [
           for (final it in s.r.iters)
@@ -822,7 +821,7 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
                 if (tree != null && showTree) ...[
                   const SizedBox(width: 8),
                   Expanded(
-                    flex: 6,
+                    flex: 8,
                     child: SearchTreeView(
                       key: const Key('ttt-tree'),
                       tree: tree,
@@ -945,12 +944,12 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
             const SizedBox(height: 8),
             if (mode == 0)
               Row(children: [
-                const Text('Je joue', style: TextStyle(color: C.text, fontSize: 13)),
+                const Text('Je joue (X commence)', style: TextStyle(color: C.text, fontSize: 13)),
                 const SizedBox(width: 10),
                 SizedBox(
-                  width: 210,
+                  width: 130,
                   child: SegBar(
-                      options: const ['X (je commence)', 'O'],
+                      options: const ['X', 'O'],
                       index: humanIsX ? 0 : 1,
                       color: _accent,
                       onChanged: (i) {
@@ -1130,27 +1129,27 @@ class TttPageState extends State<TttPage> with SingleTickerProviderStateMixin {
         child: SingleChildScrollView(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             StatRow([
-              Stat(label: 'profondeur atteinte', value: '${s.r.depth}', color: _accent),
-              Stat(label: 'nœuds explorés', value: '${s.r.nodes}'),
-              Stat(label: 'coupes α/β', value: '${s.r.cuts}'),
+              Stat(label: 'profondeur', value: '${s.r.depth}', color: _accent),
+              Stat(label: 'nœuds', value: '${s.r.nodes}'),
+              Stat(label: 'coupes', value: '${s.r.cuts}'),
               Stat(label: s.budgetMs > 0 ? 'temps / TMO' : 'temps', value: s.budgetMs > 0 ? '${_secs(s.r.millis)} / $tmo s' : _secs(s.r.millis)),
-              Stat(label: 'score (vu de X)', value: fmtScore(s.player == kX ? s.r.score : -s.r.score)),
+              Stat(label: 'score (X)', value: fmtScore(s.player == kX ? s.r.score : -s.r.score)),
             ]),
-            const SizedBox(height: 8),
-            Text('${_sym(s.player)} joue ${_move(s.r.move, s.n)} — ${_sentence(s)}', style: const TextStyle(color: C.text, fontSize: 12.8, height: 1.4)),
             if (comparable) ...[
               const SizedBox(height: 8),
               MiniTable(headers: const [
-                'comparaison',
+                'recherche',
                 'profondeur',
                 'nœuds',
                 'coupes',
                 'temps'
               ], rows: [
-                ['précédente (${p.label})', '${p.r.depth}', '${p.r.nodes}', '${p.r.cuts}', '${p.r.millis} ms'],
-                ['dernière (${s.label})', '${s.r.depth}', '${s.r.nodes}', '${s.r.cuts}', '${s.r.millis} ms'],
+                ['${p.label}', '${p.r.depth}', '${p.r.nodes}', '${p.r.cuts}', '${p.r.millis} ms'],
+                ['${s.label}', '${s.r.depth}', '${s.r.nodes}', '${s.r.cuts}', '${s.r.millis} ms'],
               ]),
             ],
+            const SizedBox(height: 8),
+            Text('${_sym(s.player)} joue ${_move(s.r.move, s.n)} — ${_sentence(s)}', style: const TextStyle(color: C.text, fontSize: 12.8, height: 1.4)),
           ]),
         ),
       ),

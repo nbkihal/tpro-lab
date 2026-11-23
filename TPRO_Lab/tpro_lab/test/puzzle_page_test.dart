@@ -9,12 +9,12 @@ import 'helpers.dart';
 
 /// Attend (en temps reel) qu'une condition devienne vraie : les recherches tournent dans des isolates.
 Future<void> waitFor(WidgetTester tester, bool Function() test, {int seconds = 40}) async {
-  await tester.runAsync(() async {
-    final sw = Stopwatch()..start();
-    while (!test() && sw.elapsed.inSeconds < seconds) {
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-    }
-  });
+  // Les messages de l'isolate arrivent en temps reel, mais leurs suites s'executent au pump suivant.
+  final sw = Stopwatch()..start();
+  while (!test() && sw.elapsed.inSeconds < seconds) {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 40)));
+    await tester.pump(const Duration(milliseconds: 20));
+  }
   await settle(tester, 400);
 }
 
@@ -79,7 +79,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
     await waitFor(tester, () => host.checks.value.contains('compare'), seconds: 90);
     expect(host.checks.value.contains('compare'), isTrue);
-    expect(find.textContaining('tas · h2 · p=1'), findsWidgets);
+    expect(find.textContaining('naïve · h1 · p=1'), findsWidgets);
     await shot(tester, 'tp4_compare');
     await tester.tap(find.text('Graphiques'));
     await settle(tester, 300);

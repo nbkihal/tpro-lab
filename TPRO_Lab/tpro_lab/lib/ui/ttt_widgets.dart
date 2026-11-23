@@ -312,12 +312,19 @@ class _TreePainter extends CustomPainter {
     final nodes = tree.nodes;
     if (nodes.isEmpty) return;
     // Disposition : chaque feuille occupe une colonne, un noeud interne est centre sur ses fils.
+    // Une branche coupee n'occupe qu'une demi-colonne.
     final x = List<double>.filled(nodes.length, 0);
-    var leaves = 0, maxPly = 0;
+    var leaves = 0.0;
+    var maxPly = 0;
     double place(int id) {
       final nd = nodes[id];
       if (nd.ply > maxPly) maxPly = nd.ply;
-      if (nd.children.isEmpty) return x[id] = (leaves++) + 0.5;
+      if (nd.children.isEmpty) {
+        final w = nd.pruned.isNotEmpty ? 0.62 : 1.0;
+        x[id] = leaves + w / 2;
+        leaves += w;
+        return x[id];
+      }
       var s = 0.0;
       for (final c in nd.children) {
         s += place(c);
@@ -326,9 +333,12 @@ class _TreePainter extends CustomPainter {
     }
 
     place(0);
-    const slot = 46.0, levelH = 84.0, top = 34.0, radius = 15.0;
-    final natW = max(leaves, 1) * slot, natH = maxPly * levelH + top + 44;
-    final scale = min(1.25, min(size.width / natW, size.height / natH));
+    const slot = 36.0, top = 34.0, radius = 14.0, minLevel = 74.0;
+    final natW = max(leaves, 1.0) * slot;
+    final scale = min(1.3, min(size.width / natW, size.height / (maxPly * minLevel + top + 44)));
+    // La hauteur disponible est repartie entre les niveaux.
+    final levelH = maxPly == 0 ? minLevel : ((size.height / scale - top - 44) / maxPly).clamp(minLevel, 170.0);
+    final natH = maxPly * levelH + top + 44;
     canvas.save();
     canvas.translate((size.width - natW * scale) / 2, max(0.0, (size.height - natH * scale) / 2));
     canvas.scale(scale);
@@ -359,9 +369,16 @@ class _TreePainter extends CustomPainter {
         canvas.drawCircle(c, radius * 0.7, _stroke(fade(C.red, 0.5), 1.2));
         canvas.drawLine(c + const Offset(-7, -7), c + const Offset(7, 7), _stroke(C.red, 2));
         canvas.drawLine(c + const Offset(7, -7), c + const Offset(-7, 7), _stroke(C.red, 2));
-        drawText(canvas, label, c - const Offset(0, radius + 2), kMono.copyWith(color: fade(C.muted, 0.7), fontSize: 8.5), anchor: Alignment.bottomCenter);
-        drawText(canvas, nd.pruned, c + const Offset(0, radius), kMono.copyWith(color: C.red, fontSize: 8.5, fontWeight: FontWeight.w700),
-            anchor: Alignment.topCenter);
+        drawText(canvas, label, c - const Offset(0, radius + 2), kMono.copyWith(color: fade(C.muted, 0.7), fontSize: 7), anchor: Alignment.bottomCenter);
+        // Une seule etiquette par groupe de branches coupees, centree sous le groupe.
+        final siblings = [
+          for (final sId in nodes[nd.parent].children)
+            if (nodes[sId].pruned.isNotEmpty) sId
+        ];
+        if (siblings.first == nd.id) {
+          final mid = (pos(siblings.first).dx + pos(siblings.last).dx) / 2;
+          drawPill(canvas, nd.pruned, Offset(mid, c.dy + radius + 9), color: C.red, size: 8.5);
+        }
         continue;
       }
       final isCur = nd.id == current;
