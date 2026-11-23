@@ -273,13 +273,20 @@ class BottomTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Row(children: [
-        for (var i = 0; i < tabs.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: ChipBtn(label: tabs[i], color: accent, active: i == index, onTap: () => onChanged(i)),
+        // Les onglets defilent si la place manque (fenetre minimale, grandes polices).
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(children: [
+              for (var i = 0; i < tabs.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: ChipBtn(label: tabs[i], color: accent, active: i == index, onTap: () => onChanged(i)),
+                ),
+            ]),
           ),
-        const Spacer(),
-        if (trailing != null) trailing!,
+        ),
+        if (trailing != null) ...[const SizedBox(width: 8), trailing!],
       ]),
       const SizedBox(height: 8),
       Expanded(child: IndexedStack(index: index, children: children)),

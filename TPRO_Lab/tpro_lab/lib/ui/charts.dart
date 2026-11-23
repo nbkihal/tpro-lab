@@ -43,7 +43,7 @@ class _LinePainter extends CustomPainter {
       lx += 22 + s.name.length * 6.0;
     }
     if (pts.isEmpty) {
-      drawText(canvas, 'Lancez le benchmark', area.center, style, anchor: Alignment.center);
+      drawText(canvas, 'Lancez les mesures', area.center, style, anchor: Alignment.center);
       return;
     }
     final minX = pts.map((p) => p.dx).reduce(min), maxX = pts.map((p) => p.dx).reduce(max);

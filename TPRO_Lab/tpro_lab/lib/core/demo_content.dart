@@ -72,7 +72,7 @@ const List<String> kCyclePseudo = [
   '    tant que Q n\'est pas vide',
   '        u ← défiler(Q)',
   '        pour chaque voisin v de u',
-  '            si dist[v] = -1                    // arête d\'arbre',
+  '            si dist[v] = -1   // arête d\'arbre',
   '                dist[v] ← dist[u]+1 ; parent[v] ← u ; enfiler(Q, v)',
   '            sinon si v ≠ parent[u]   // arête hors arbre : cycle',
   '                best ← min(best, dist[u] + dist[v] + 1)',

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tpro_lab/main.dart';
@@ -79,5 +80,24 @@ void main() {
     expect(find.textContaining('Petersen'), findsWidgets);
     LabBus.active.value = 0;
     await settle(tester, 100);
+  });
+
+  // Taille minimale de la fenetre (1280 x 760 moins le rail) et mode presentation (polices x 1,25).
+  testWidgets('TP 1 et accueil : taille minimale et mode presentation sans debordement', (tester) async {
+    await pumpPage(tester, const MediaQuery(data: MediaQueryData(textScaler: TextScaler.linear(1.25)), child: CyclePage()),
+        size: const Size(1204, 760));
+    await tester.tap(find.text('Lancer la démonstration'));
+    await settle(tester, 800);
+    final host = tester.widget<LabScaffold>(find.byType(LabScaffold)).host;
+    host.player.last();
+    await settle(tester);
+    await shot(tester, 'tp1_min_presentation');
+    host.tab.value = 1;
+    await settle(tester);
+    host.tab.value = 2;
+    await settle(tester);
+    await pumpPage(tester, const MediaQuery(data: MediaQueryData(textScaler: TextScaler.linear(1.25)), child: HomePage()),
+        size: const Size(1204, 760));
+    await shot(tester, 'home_min_presentation');
   });
 }
