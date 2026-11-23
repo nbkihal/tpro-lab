@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Step;
 
 import '../core/demo_content.dart';
 import '../core/trace.dart';
@@ -161,7 +161,7 @@ class ExplainPanel extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
               child: Row(children: [
                 Expanded(
-                  child: Seg(
+                  child: SegBar(
                     options: ['Exécution', 'Démo  ${host.checks.value.length}/${content.checklist.length}', 'Énoncé'],
                     index: tab,
                     color: accent,

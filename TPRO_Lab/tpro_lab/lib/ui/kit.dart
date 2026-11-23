@@ -155,13 +155,13 @@ class NumStepper extends StatelessWidget {
   }
 }
 
-class Seg extends StatelessWidget {
+class SegBar extends StatelessWidget {
   final List<String> options;
   final int index;
   final ValueChanged<int> onChanged;
   final Color color;
   final bool enabled;
-  const Seg({super.key, required this.options, required this.index, required this.onChanged, this.color = C.cyan, this.enabled = true});
+  const SegBar({super.key, required this.options, required this.index, required this.onChanged, this.color = C.cyan, this.enabled = true});
 
   @override
   Widget build(BuildContext context) {
