@@ -14,9 +14,10 @@ bool _fontsLoaded = false;
 /// Dossier des captures d'ecran ; vide si la variable TPRO_SHOTS n'est pas definie.
 String get shotsDir => Platform.environment['TPRO_SHOTS'] ?? '';
 
-/// Charge de vraies polices si elles existent (Windows), pour que les captures soient lisibles.
+/// Charge de vraies polices si elles existent (Windows) : la police de test par defaut est
+/// beaucoup plus large que la vraie et fausserait les verifications de mise en page.
 Future<void> loadRealFonts() async {
-  if (_fontsLoaded || shotsDir.isEmpty) return;
+  if (_fontsLoaded) return;
   _fontsLoaded = true;
   Future<void> load(String family, List<String> paths) async {
     final files = paths.map(File.new).where((f) => f.existsSync()).toList();
