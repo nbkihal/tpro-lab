@@ -595,8 +595,8 @@ class _StatementTabState extends State<_StatementTab> {
     final done = widget.host.checks.value;
     return ListView(padding: const EdgeInsets.all(14), children: [
       _sectionTitle('Énoncé officiel · ${c.source}', widget.accent),
-      Text('Les phrases soulignées sont les exigences : cliquez pour voir où l\'application y répond.',
-          style: const TextStyle(color: C.muted, fontSize: 11.5, height: 1.35)),
+      const Text('Les phrases soulignées sont les exigences : cliquez pour voir où l\'application y répond.',
+          style: TextStyle(color: C.muted, fontSize: 11.5, height: 1.35)),
       const SizedBox(height: 10),
       for (var p = 0; p < c.statement.length; p++)
         Padding(

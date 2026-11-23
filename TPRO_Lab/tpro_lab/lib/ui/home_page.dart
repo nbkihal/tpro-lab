@@ -2,33 +2,20 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../core/demo_content.dart';
+import 'explain_panel.dart';
 import 'kit.dart';
 
-class _Tp {
-  final String tag, title, desc, complexity;
-  final Color color;
-  const _Tp(this.tag, this.title, this.desc, this.complexity, this.color);
-}
-
-const _tps = [
-  _Tp('TP 1 - TD2', 'Plus court cycle', 'Un parcours en largeur depuis chaque sommet d\'un graphe non oriente.', 'O(n (n + m))', C.cyan),
-  _Tp('TP 2 - TD3', 'Voyageur de commerce', 'Enumeration exacte contre programmation dynamique de Bellman-Held-Karp.',
-      'O(n!)  vs  O(n² 2ⁿ)', C.amber),
-  _Tp('TP 3 - TD4', 'Morpion N x N', 'MinMax, elagage alpha/beta, approfondissement iteratif et client TCP du tournoi.',
-      'alpha/beta + TMO', C.violet),
-  _Tp('TP 4 - TD5', 'Taquin 4 x 4', 'A* et WA*, tas binaire contre file naive, trois heuristiques comparees.', 'f = g + p·h', C.green),
-];
-
+/// Accueil : choisir un TP. Quatre cartes animees + l'ordre conseille de la demonstration.
 class HomePage extends StatefulWidget {
-  final ValueChanged<int> onOpen;
-  const HomePage({super.key, required this.onOpen});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
-  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(seconds: 6))..repeat();
+  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
 
   @override
   void dispose() {
@@ -38,92 +25,162 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final total = kLabs.fold<int>(0, (s, l) => s + l.minutes);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 26, 28, 24),
+      padding: const EdgeInsets.fromLTRB(28, 22, 28, 18),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Techniques de programmation', style: TextStyle(color: C.muted, fontSize: 13, letterSpacing: 1)),
-        const SizedBox(height: 4),
-        const Text('Quatre travaux pratiques, une seule application',
-            style: TextStyle(color: C.text, fontSize: 28, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 6),
-        const Text('Choisissez un module : chaque algorithme est execute, mesure et visualise.',
-            style: TextStyle(color: C.muted, fontSize: 14)),
-        const SizedBox(height: 22),
+        const Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text('TPRO Lab', style: TextStyle(color: C.text, fontSize: 30, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+          SizedBox(width: 14),
+          Padding(
+            padding: EdgeInsets.only(bottom: 5),
+            child: Text('Les quatre TP notés · ESI Alger · 2CS', style: TextStyle(color: C.muted, fontSize: 14)),
+          ),
+          Spacer(),
+          Padding(
+            padding: EdgeInsets.only(bottom: 5),
+            child: Text('Choisissez un TP — la démonstration s\'explique étape par étape', style: TextStyle(color: C.muted, fontSize: 13)),
+          ),
+        ]),
+        const SizedBox(height: 16),
         Expanded(
           child: Column(children: [
-            Expanded(child: Row(children: [_card(0), const SizedBox(width: 16), _card(1)])),
+            Expanded(child: Row(children: [Expanded(child: _card(0)), const SizedBox(width: 16), Expanded(child: _card(1))])),
             const SizedBox(height: 16),
-            Expanded(child: Row(children: [_card(2), const SizedBox(width: 16), _card(3)])),
+            Expanded(child: Row(children: [Expanded(child: _card(2)), const SizedBox(width: 16), Expanded(child: _card(3))])),
+          ]),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(color: C.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: C.line)),
+          child: Row(children: [
+            const Icon(Icons.timer_outlined, size: 16, color: C.muted),
+            const SizedBox(width: 8),
+            const Text('Ordre conseillé', style: TextStyle(color: C.muted, fontSize: 12.5, fontWeight: FontWeight.w700)),
+            const SizedBox(width: 12),
+            for (var k = 0; k < kDemoOrder.length; k++) ...[
+              if (k > 0) const Padding(padding: EdgeInsets.symmetric(horizontal: 6), child: Icon(Icons.arrow_forward_rounded, size: 14, color: C.muted)),
+              _OrderChip(lab: kDemoOrder[k]),
+            ],
+            const Spacer(),
+            Text('≈ $total min au total', style: kMono.copyWith(color: C.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
           ]),
         ),
       ]),
     );
   }
 
-  Widget _card(int i) => Expanded(child: _TpCard(tp: _tps[i], index: i, anim: _anim, onTap: () => widget.onOpen(i + 1)));
+  Widget _card(int lab) => _LabCard(lab: lab, anim: _anim);
 }
 
-class _TpCard extends StatefulWidget {
-  final _Tp tp;
-  final int index;
-  final Animation<double> anim;
-  final VoidCallback onTap;
-  const _TpCard({required this.tp, required this.index, required this.anim, required this.onTap});
+class _OrderChip extends StatelessWidget {
+  /// Indice dans [kLabs] (0..3).
+  final int lab;
+  const _OrderChip({required this.lab});
 
   @override
-  State<_TpCard> createState() => _TpCardState();
+  Widget build(BuildContext context) {
+    final c = kLabs[lab];
+    final color = kAccents[lab + 1];
+    return Tooltip(
+      message: 'Ouvrir ${c.tag} avec son premier scénario chargé',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(9),
+        onTap: () => LabBus.open(lab + 1, scenarioIndex: 0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(color: fade(color, 0.12), borderRadius: BorderRadius.circular(9), border: Border.all(color: fade(color, 0.5))),
+          child: Text('${c.tag} · ${c.minutes} min', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+        ),
+      ),
+    );
+  }
 }
 
-class _TpCardState extends State<_TpCard> {
+class _LabCard extends StatefulWidget {
+  final int lab;
+  final Animation<double> anim;
+  const _LabCard({required this.lab, required this.anim});
+
+  @override
+  State<_LabCard> createState() => _LabCardState();
+}
+
+class _LabCardState extends State<_LabCard> {
   bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
-    final tp = widget.tp;
+    final c = kLabs[widget.lab];
+    final color = kAccents[widget.lab + 1];
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
+      cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: () => LabBus.open(widget.lab + 1),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(22),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              colors: [fade(tp.color, _hover ? 0.22 : 0.10), C.card],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            border: Border.all(color: fade(tp.color, _hover ? 0.8 : 0.25), width: 1.2),
+            color: C.card,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: _hover ? fade(color, 0.8) : C.line, width: _hover ? 1.5 : 1),
+            boxShadow: [BoxShadow(color: fade(color, _hover ? 0.22 : 0.0), blurRadius: 28, spreadRadius: -6)],
           ),
-          child: Row(children: [
+          clipBehavior: Clip.antiAlias,
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
-              flex: 5,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(tp.tag, style: TextStyle(color: tp.color, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                const SizedBox(height: 8),
-                Text(tp.title, style: const TextStyle(color: C.text, fontSize: 22, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Flexible(
-                  child: Text(tp.desc,
-                      overflow: TextOverflow.fade, style: const TextStyle(color: C.muted, fontSize: 13, height: 1.4)),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: fade(C.bg, 0.6), borderRadius: BorderRadius.circular(8)),
-                  child: Text(tp.complexity, style: kMono.copyWith(color: tp.color, fontSize: 13, fontWeight: FontWeight.w700)),
-                ),
-              ]),
+              flex: 11,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 8, 16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(color: fade(color, 0.16), borderRadius: BorderRadius.circular(7)),
+                      child: Text(c.tag, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(child: Text(c.source, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: C.muted, fontSize: 12.5))),
+                  ]),
+                  const SizedBox(height: 10),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(c.title, style: const TextStyle(color: C.text, fontSize: 25, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
+                  ),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: Text(c.algos, overflow: TextOverflow.fade, style: kMono.copyWith(color: fade(C.text, 0.8), fontSize: 12.5, height: 1.45)),
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: _hover ? color : fade(color, 0.14),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: fade(color, 0.7)),
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.play_arrow_rounded, size: 17, color: _hover ? C.bg : color),
+                      const SizedBox(width: 6),
+                      Text('Lancer la démonstration', style: TextStyle(color: _hover ? C.bg : color, fontSize: 13, fontWeight: FontWeight.w800)),
+                    ]),
+                  ),
+                ]),
+              ),
             ),
-            const SizedBox(width: 12),
             Expanded(
-              flex: 4,
-              child: AnimatedBuilder(
-                animation: widget.anim,
-                builder: (_, __) => CustomPaint(painter: _MiniPainter(widget.index, widget.anim.value, tp.color), size: Size.infinite),
+              flex: 9,
+              child: RepaintBoundary(
+                child: AnimatedBuilder(
+                  animation: widget.anim,
+                  builder: (_, __) => CustomPaint(painter: _PreviewPainter(widget.lab, widget.anim.value, color)),
+                ),
               ),
             ),
           ]),
@@ -133,92 +190,160 @@ class _TpCardState extends State<_TpCard> {
   }
 }
 
-/// Mini-illustrations animees des quatre algorithmes.
-class _MiniPainter extends CustomPainter {
-  final int kind;
-  final double t;
+/// Apercus animes des quatre TP.
+class _PreviewPainter extends CustomPainter {
+  final int lab;
+  final double t; // 0..1, boucle
   final Color color;
-  _MiniPainter(this.kind, this.t, this.color);
+  _PreviewPainter(this.lab, this.t, this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final s = min(size.width, size.height);
+    final s = min(size.width, size.height) * 0.86;
     final o = Offset((size.width - s) / 2, (size.height - s) / 2);
-    Offset p(double x, double y) => o + Offset(x * s, y * s);
-    final line = Paint()
-      ..color = fade(color, 0.35)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    final hot = Paint()
-      ..color = color
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+    canvas.save();
+    canvas.translate(o.dx, o.dy);
+    switch (lab) {
+      case 0:
+        _cycle(canvas, s);
+      case 1:
+        _tsp(canvas, s);
+      case 2:
+        _ttt(canvas, s);
+      default:
+        _puzzle(canvas, s);
+    }
+    canvas.restore();
+  }
 
-    if (kind == 0) {
-      // BFS : une onde part d'un sommet, niveau par niveau
-      const pts = [Offset(.5, .5), Offset(.25, .28), Offset(.75, .3), Offset(.3, .78), Offset(.72, .76), Offset(.08, .55), Offset(.93, .55)];
-      const es = [[0, 1], [0, 2], [0, 3], [0, 4], [1, 5], [3, 5], [2, 6], [4, 6], [1, 2]];
-      const level = [0, 1, 1, 1, 1, 2, 2];
-      for (final e in es) {
-        canvas.drawLine(p(pts[e[0]].dx, pts[e[0]].dy), p(pts[e[1]].dx, pts[e[1]].dy), line);
+  Paint _stroke(Color c, double w) => Paint()
+    ..color = c
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = w
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+
+  void _node(Canvas canvas, Offset p, double r, Color c, {double glow = 0}) {
+    if (glow > 0) canvas.drawCircle(p, r * (1.6 + glow), Paint()..color = fade(c, 0.18 * glow));
+    canvas.drawCircle(p, r, Paint()..color = C.card2);
+    canvas.drawCircle(p, r, _stroke(c, max(1.5, r * 0.22)));
+  }
+
+  // Un cycle qui pulse dans un graphe.
+  void _cycle(Canvas canvas, double s) {
+    final pts = [
+      for (final p in const [[0.12, 0.5], [0.34, 0.2], [0.34, 0.8], [0.58, 0.5], [0.84, 0.24], [0.84, 0.76], [0.6, 0.1]]) Offset(p[0] * s, p[1] * s)
+    ];
+    const edges = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [3, 5], [4, 5], [1, 6], [6, 4]];
+    const cyc = [3, 4, 5];
+    final pulse = 0.5 + 0.5 * sin(t * 2 * pi * 4);
+    for (final e in edges) {
+      canvas.drawLine(pts[e[0]], pts[e[1]], _stroke(C.line, s * 0.012));
+    }
+    for (var i = 0; i < 3; i++) {
+      canvas.drawLine(pts[cyc[i]], pts[cyc[(i + 1) % 3]], _stroke(fade(color, 0.55 + 0.45 * pulse), s * (0.02 + 0.012 * pulse)));
+    }
+    // Front du BFS : une onde qui part du sommet 0.
+    final wave = (t * 2) % 1;
+    for (var i = 0; i < pts.length; i++) {
+      final d = (pts[i] - pts[0]).distance / s;
+      final hit = (1 - ((wave * 1.2 - d).abs() * 6)).clamp(0.0, 1.0);
+      _node(canvas, pts[i], s * 0.045, cyc.contains(i) ? color : Color.lerp(C.muted, color, hit)!, glow: cyc.contains(i) ? pulse : hit);
+    }
+  }
+
+  // Une tournee tracee entre des villes.
+  void _tsp(Canvas canvas, double s) {
+    final pts = [
+      for (final p in const [[0.5, 0.1], [0.86, 0.3], [0.8, 0.74], [0.46, 0.9], [0.14, 0.66], [0.2, 0.26]]) Offset(p[0] * s, p[1] * s)
+    ];
+    for (var i = 0; i < pts.length; i++) {
+      for (var j = i + 1; j < pts.length; j++) {
+        canvas.drawLine(pts[i], pts[j], _stroke(fade(C.line, 0.6), s * 0.006));
       }
-      final wave = (t * 4) % 4;
-      for (var i = 0; i < pts.length; i++) {
-        final on = wave >= level[i] + 0.3;
-        canvas.drawCircle(p(pts[i].dx, pts[i].dy), s * 0.05, Paint()..color = on ? color : C.card2);
-        canvas.drawCircle(p(pts[i].dx, pts[i].dy), s * 0.05, line);
+    }
+    final n = pts.length;
+    final prog = (t * 2) % 1 * n;
+    final path = Path()..moveTo(pts[0].dx, pts[0].dy);
+    var dot = pts[0];
+    for (var k = 0; k < n; k++) {
+      final a = pts[k], b = pts[(k + 1) % n];
+      final f = (prog - k).clamp(0.0, 1.0);
+      if (f <= 0) break;
+      dot = Offset.lerp(a, b, f)!;
+      path.lineTo(dot.dx, dot.dy);
+    }
+    canvas.drawPath(path, _stroke(color, s * 0.022));
+    for (var i = 0; i < n; i++) {
+      _node(canvas, pts[i], s * 0.045, i == 0 ? C.text : color, glow: i == 0 ? 0.6 : 0);
+    }
+    canvas.drawCircle(dot, s * 0.03, Paint()..color = C.text);
+    canvas.drawCircle(dot, s * 0.06, Paint()..color = fade(color, 0.3));
+  }
+
+  // Une grille X / O qui se remplit.
+  void _ttt(Canvas canvas, double s) {
+    const n = 4;
+    final cell = s / n;
+    for (var i = 1; i < n; i++) {
+      canvas.drawLine(Offset(i * cell, s * 0.04), Offset(i * cell, s * 0.96), _stroke(C.line, s * 0.012));
+      canvas.drawLine(Offset(s * 0.04, i * cell), Offset(s * 0.96, i * cell), _stroke(C.line, s * 0.012));
+    }
+    const moves = [5, 6, 10, 1, 0, 9, 15, 2, 3]; // X, O, X, O... X aligne 0-5-10-15
+    final prog = (t * 2) % 1 * (moves.length + 3);
+    for (var k = 0; k < moves.length; k++) {
+      final f = (prog - k).clamp(0.0, 1.0);
+      if (f <= 0) break;
+      final c = Offset((moves[k] % n + 0.5) * cell, (moves[k] ~/ n + 0.5) * cell);
+      final r = cell * 0.27;
+      if (k.isEven) {
+        final p = _stroke(color, s * 0.028);
+        canvas.drawLine(c + Offset(-r, -r), c + Offset(-r + 2 * r * min(1, f * 2), -r + 2 * r * min(1, f * 2)), p);
+        if (f > 0.5) canvas.drawLine(c + Offset(r, -r), c + Offset(r - 2 * r * (f - 0.5) * 2, -r + 2 * r * (f - 0.5) * 2), p);
+      } else {
+        canvas.drawArc(Rect.fromCircle(center: c, radius: r), -pi / 2, 2 * pi * f, false, _stroke(C.text, s * 0.026));
       }
-    } else if (kind == 1) {
-      // Tournee qui se dessine
-      const pts = [Offset(.15, .3), Offset(.45, .12), Offset(.85, .25), Offset(.9, .7), Offset(.55, .88), Offset(.2, .75)];
-      final prog = (t * 2) % 1.4;
-      final total = pts.length.toDouble();
-      for (var i = 0; i < pts.length; i++) {
-        final a = pts[i], b = pts[(i + 1) % pts.length];
-        final f = (prog * total / 1.0 - i).clamp(0.0, 1.0);
-        canvas.drawLine(p(a.dx, a.dy), p(b.dx, b.dy), line);
-        if (f > 0) canvas.drawLine(p(a.dx, a.dy), p(a.dx + (b.dx - a.dx) * f, a.dy + (b.dy - a.dy) * f), hot);
-      }
-      for (final q in pts) {
-        canvas.drawCircle(p(q.dx, q.dy), s * 0.045, Paint()..color = color);
-      }
-    } else if (kind == 2) {
-      // Plateau qui se remplit
-      const n = 5;
-      final cell = s * 0.8 / n;
-      final org = p(.1, .1);
-      for (var i = 0; i <= n; i++) {
-        canvas.drawLine(org + Offset(i * cell, 0), org + Offset(i * cell, n * cell), line);
-        canvas.drawLine(org + Offset(0, i * cell), org + Offset(n * cell, i * cell), line);
-      }
-      const moves = [12, 7, 13, 11, 8, 17, 6, 18, 14, 16, 4];
-      final shown = ((t * 3) % 1.2 * moves.length).floor().clamp(0, moves.length);
-      for (var k = 0; k < shown; k++) {
-        final c = org + Offset((moves[k] % n + .5) * cell, (moves[k] ~/ n + .5) * cell);
-        if (k.isEven) {
-          canvas.drawLine(c - Offset(cell * .25, cell * .25), c + Offset(cell * .25, cell * .25), hot);
-          canvas.drawLine(c - Offset(cell * .25, -cell * .25), c + Offset(cell * .25, -cell * .25), hot);
-        } else {
-          canvas.drawCircle(c, cell * .27, Paint()..color = C.amber..style = PaintingStyle.stroke..strokeWidth = 3);
-        }
-      }
-    } else {
-      // Taquin : une tuile glisse
-      const n = 4;
-      final cell = s * 0.8 / n;
-      final org = p(.1, .1);
-      final phase = (t * 6) % 2;
-      final slide = phase < 1 ? Curves.easeInOut.transform(phase) : 1 - Curves.easeInOut.transform(phase - 1);
-      for (var i = 0; i < 15; i++) {
-        var c = org + Offset((i % n) * cell, (i ~/ n) * cell);
-        if (i == 14) c += Offset(cell * slide, 0);
-        final r = RRect.fromRectAndRadius(Rect.fromLTWH(c.dx + 2, c.dy + 2, cell - 4, cell - 4), Radius.circular(cell * .18));
-        canvas.drawRRect(r, Paint()..color = i == 14 ? color : fade(color, 0.22));
-      }
+    }
+    final w = (prog - moves.length + 2).clamp(0.0, 1.0);
+    if (w > 0) {
+      final a = Offset(0.5 * cell, 0.5 * cell), b = Offset(3.5 * cell, 3.5 * cell);
+      canvas.drawLine(a, Offset.lerp(a, b, w)!, _stroke(fade(C.green, 0.9), s * 0.035));
+    }
+  }
+
+  // Des jetons qui glissent.
+  void _puzzle(Canvas canvas, double s) {
+    const n = 3;
+    final cell = s / n;
+    // Cycle de 4 deplacements de la case vide autour d'un carre : le plateau revient a l'identique.
+    const cyclePos = [8, 7, 4, 5];
+    final phase = (t * 12) % 12; // 12 deplacements ramenent les trois jetons a leur place
+    final k = phase.floor() % 12;
+    final f = Curves.easeInOut.transform(phase - phase.floor());
+    final tiles = <int, int>{}; // position -> jeton
+    final board = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+    for (var i = 0; i < k; i++) {
+      final from = cyclePos[(i + 1) % 4], to = cyclePos[i % 4];
+      board[to] = board[from];
+      board[from] = 0;
+    }
+    for (var i = 0; i < 9; i++) {
+      tiles[i] = board[i];
+    }
+    final movingFrom = cyclePos[(k + 1) % 4], movingTo = cyclePos[k % 4];
+    for (var i = 0; i < 9; i++) {
+      final v = tiles[i]!;
+      if (v == 0) continue;
+      var c = Offset((i % n + 0.5) * cell, (i ~/ n + 0.5) * cell);
+      if (i == movingFrom) c = Offset.lerp(c, Offset((movingTo % n + 0.5) * cell, (movingTo ~/ n + 0.5) * cell), f)!;
+      final r = RRect.fromRectAndRadius(Rect.fromCenter(center: c, width: cell * 0.86, height: cell * 0.86), Radius.circular(cell * 0.16));
+      final hot = i == movingFrom;
+      canvas.drawRRect(r, Paint()..color = hot ? fade(color, 0.3) : C.card2);
+      canvas.drawRRect(r, _stroke(hot ? color : C.line, s * 0.012));
+      drawText(canvas, '$v', c, kMono.copyWith(color: hot ? color : C.text, fontSize: cell * 0.36, fontWeight: FontWeight.w800), anchor: Alignment.center);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _MiniPainter old) => old.t != t;
+  bool shouldRepaint(covariant _PreviewPainter old) => old.t != t;
 }

@@ -99,7 +99,7 @@ class _ShellState extends State<Shell> {
 
   bool _onKey(KeyEvent e) {
     // Une boite de dialogue ou un menu est ouvert : on ne touche a rien.
-    if (ModalRoute.of(context)?.isCurrent == false) return false;
+    if (!mounted || Navigator.of(context).canPop()) return false;
     final k = e.logicalKey;
     if (e is KeyDownEvent) {
       if (k == LogicalKeyboardKey.f11) {

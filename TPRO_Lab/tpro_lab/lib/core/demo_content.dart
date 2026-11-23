@@ -74,7 +74,7 @@ const List<String> kCyclePseudo = [
   '        pour chaque voisin v de u',
   '            si dist[v] = -1                    // arête d\'arbre',
   '                dist[v] ← dist[u]+1 ; parent[v] ← u ; enfiler(Q, v)',
-  '            sinon si v ≠ parent[u]             // arête hors arbre : cycle',
+  '            sinon si v ≠ parent[u]   // arête hors arbre : cycle',
   '                best ← min(best, dist[u] + dist[v] + 1)',
   'retourner best (et le cycle)',
 ];
@@ -88,11 +88,11 @@ const List<String> kEnumPseudo = [
 ];
 
 const List<String> kHkPseudo = [
-  'pour j ← 1 à n-1 :  C({0,j}, j) ← d(0, j)                  // initialisation',
-  'pour taille ← 3 à n                                        // boucle 1 : taille de S',
-  '    pour chaque S de cette taille contenant 0              // boucle 2 : sous-ensembles',
-  '        pour chaque j dans S, j ≠ 0                        // boucle 3 : dernière ville',
-  '            C(S, j) ← min sur i dans S, i ≠ 0, i ≠ j       // boucle 4 : avant-dernière ville',
+  'pour j ← 1 à n-1 :  C({0,j}, j) ← d(0, j)   // initialisation',
+  'pour taille ← 3 à n   // boucle 1 : taille de S',
+  '    pour chaque S de cette taille contenant 0   // boucle 2 : sous-ensembles',
+  '        pour chaque j dans S, j ≠ 0   // boucle 3 : dernière ville',
+  '            C(S, j) ← min sur i dans S, i ≠ 0, i ≠ j   // boucle 4 : avant-dernière ville',
   '                        de C(S−{j}, i) + d(i, j)',
   'retourner min sur j ≠ 0 de C({0..n-1}, j) + d(j, 0)',
 ];
@@ -105,16 +105,16 @@ const List<String> kTttPseudo = [
   '        pour chaque fils c (les meilleurs d\'abord)',
   '            v ← max(v, alphabeta(c, profondeur-1, α, β, faux))',
   '            α ← max(α, v)',
-  '            si α ≥ β : arrêter                  // coupe β',
+  '            si α ≥ β : arrêter   // coupe β',
   '        retourner v',
   '    sinon',
   '        v ← +∞',
   '        pour chaque fils c',
   '            v ← min(v, alphabeta(c, profondeur-1, α, β, vrai))',
   '            β ← min(β, v)',
-  '            si α ≥ β : arrêter                  // coupe α',
+  '            si α ≥ β : arrêter   // coupe α',
   '        retourner v',
-  'fonction meilleurCoup(position, HMAX, TMO)      // approfondissement itératif',
+  'fonction meilleurCoup(position, HMAX, TMO)   // approfondissement itératif',
   '    armer l\'alarme pour TMO (moins une marge de sécurité)',
   '    best ← un coup légal (ne jamais répondre rien)',
   '    pour profondeur ← 1 à HMAX',
@@ -125,7 +125,7 @@ const List<String> kTttPseudo = [
 ];
 
 const List<String> kAStarPseudo = [
-  'ouverts ← {départ}  avec f(départ) = g + p·h       // p = 1 → A*, p > 1 → WA*',
+  'ouverts ← {départ}  avec f(départ) = g + p·h   // p = 1 → A*, p > 1 → WA*',
   'fermés ← ∅',
   'tant que ouverts n\'est pas vide',
   '    x ← extraire de ouverts le nœud de f minimal',
@@ -225,12 +225,12 @@ List<List<double>> _circle(int n, {double cx = 0.5, double cy = 0.5, double r = 
     ];
 
 final List<GraphPreset> kGraphPresets = [
-  GraphPreset('Triangle', [
+  const GraphPreset('Triangle', [
     [0.12, 0.50], [0.30, 0.22], [0.30, 0.78], [0.50, 0.50], [0.70, 0.25], [0.70, 0.75], [0.90, 0.50], [0.50, 0.12],
   ], [
     [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [3, 5], [4, 5], [4, 6], [5, 6], [1, 7], [7, 4],
   ]),
-  GraphPreset('Carré', [
+  const GraphPreset('Carré', [
     [0.3, 0.25], [0.7, 0.25], [0.7, 0.75], [0.3, 0.75],
   ], [
     [0, 1], [1, 2], [2, 3], [3, 0],
@@ -243,7 +243,7 @@ final List<GraphPreset> kGraphPresets = [
     [0, 5], [1, 6], [2, 7], [3, 8], [4, 9],
     [5, 7], [7, 9], [9, 6], [6, 8], [8, 5],
   ]),
-  GraphPreset('Arbre', [
+  const GraphPreset('Arbre', [
     [0.5, 0.12], [0.28, 0.38], [0.72, 0.38], [0.14, 0.66], [0.38, 0.66], [0.62, 0.66], [0.86, 0.66], [0.08, 0.9], [0.22, 0.9], [0.62, 0.9],
   ], [
     [0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [3, 7], [3, 8], [5, 9],
